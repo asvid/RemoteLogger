@@ -15,7 +15,7 @@ class App : Application() {
         Log.d("APP", "onCreate")
         RemoteLogger.initialize(
             Config(
-                "127.0.0.1",
+                "192.168.1.87",
                 1234,
                 CoroutineScope(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
             )

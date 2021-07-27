@@ -22,19 +22,22 @@ object RemoteLogger {
         this.config = config
         config.coroutineScope.launch {
             client.webSocket(host = config.ip, port = config.port) {
-//                session = this
+                session = this
                 this.send("we have a connection from Android")
             }
         }
     }
 
     fun logEvent(event: Event) {
-//        if (session == null) throw Exception("not initialized!")
-//        config.coroutineScope.launch {
-//            session?.send(event.toString())
-//        }
+        if (session == null) throw Exception("not initialized!")
+        // todo: cache events untill its possible to send them, nothing can be lost
+        config.coroutineScope.launch {
+            session?.send(event.toString())
+        }
     }
 }
+
+// todo: create global exception handler that will capture last exception and send it before app crashes
 
 data class Event(val tag: String, val message: String)
 
