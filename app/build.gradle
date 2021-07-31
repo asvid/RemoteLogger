@@ -9,7 +9,7 @@ android {
     compileSdk 30
 
     defaultConfig {
-        applicationId "io.github.asvid.remotelogger"
+        applicationId "io.github.asvid.remotelogger.app"
         minSdk 24
         targetSdk 30
         versionCode 1

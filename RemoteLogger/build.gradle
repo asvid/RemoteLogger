@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.github.asvid.remotelogger'
-version = '0.0.1'
+version = '0.1.2'
 
 android {
     signingConfigs {
