@@ -1,4 +1,4 @@
-package io.github.asvid.remotelogger.ui.theme
+package io.github.asvid.remoteloggerapp.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Shapes

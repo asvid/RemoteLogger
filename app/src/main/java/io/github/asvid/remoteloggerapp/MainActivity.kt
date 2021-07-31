@@ -1,4 +1,4 @@
-package io.github.asvid.remotelogger
+package io.github.asvid.remoteloggerapp
 
 import android.os.Bundle
 import android.util.Log
@@ -15,9 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import io.github.asvid.remotelogger.ui.theme.RemoteLoggerTheme
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import io.github.asvid.remoteloggerapp.ui.theme.RemoteLoggerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,6 +33,11 @@ class MainActivity : ComponentActivity() {
                             onClick = { Log.d("MAIN_ACT", "button clicked") }
                         ) {
                             Text("click me!")
+                        }
+                        Button(
+                            onClick = { throw Exception("I'm designed to crash the app!") }
+                        ) {
+                            Text("I'm going to crash'!")
                         }
                     }
                 }

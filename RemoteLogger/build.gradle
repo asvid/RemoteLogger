@@ -1,9 +1,14 @@
 plugins {
     id 'com.android.library'
     id 'kotlin-android'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.20'
 }
 
 android {
+    signingConfigs {
+        release {
+        }
+    }
     compileSdk 30
 
     defaultConfig {
@@ -36,7 +41,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.4.0'
     implementation("io.ktor:ktor-client-websockets:$ktor_version")
     implementation("io.ktor:ktor-client-cio:$ktor_version")
-
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

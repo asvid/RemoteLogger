@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "collections": "^5.1.12",
     "express": "^4.17.1",
+    "pug": "^3.0.2",
     "ws": "^7.5.3"
   }
 }

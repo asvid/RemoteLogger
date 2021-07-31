@@ -1,4 +1,4 @@
-package io.github.asvid.remotelogger
+package io.github.asvid.remoteloggerapp
 
 import org.junit.Test
 
