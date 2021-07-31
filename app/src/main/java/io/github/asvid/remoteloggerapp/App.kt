@@ -17,7 +17,6 @@ class App : Application() {
             Config(
                 "192.168.1.87",
                 1234,
-                CoroutineScope(Executors.newSingleThreadExecutor().asCoroutineDispatcher()),
                 applicationContext.packageName
             )
         )

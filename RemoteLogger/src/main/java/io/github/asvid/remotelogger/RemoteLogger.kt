@@ -28,16 +28,20 @@ class RemoteLogger {
     var session: DefaultClientWebSocketSession? = null
 
     private var events: Channel<Event>? = null
+    private val logcatScope =
+        CoroutineScope(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
+    private val wsScope =
+        CoroutineScope(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
 
     fun initialize(config: Config) {
         this.config = config
-        events = Channel<Event>()
+        events = Channel()
         connect()
     }
 
     // todo: some reconect policy? WS pinging?
     fun connect() {
-        config.coroutineScope.launch {
+        wsScope.launch {
             readLogcatStream()
             client.webSocket(host = config.ip, port = config.port) {
                 session = this
@@ -49,7 +53,7 @@ class RemoteLogger {
 
     private fun setAppCrashListener() {
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
-            config.coroutineScope.launch {
+            wsScope.launch {
                 Log.e("AndroidRuntime", "--->uncaughtException:$paramThread<---", paramThrowable);
                 val event = Event(
                     "CRASH",
@@ -87,9 +91,7 @@ class RemoteLogger {
     }
 
     private fun readLogcatStream() {
-        CoroutineScope(
-            Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-        ).launch {
+        logcatScope.launch {
             cleanLogcat()
 
             val loggingProcess = Runtime.getRuntime()
@@ -100,7 +102,7 @@ class RemoteLogger {
             while (true) {
                 val line = buff.readLine()
                 kotlin.runCatching {
-                    val logcatRegex = """(.*) ([IDWVE])(\/.+)+\ *(\(\d*\)): (.*)""".toRegex()
+                    val logcatRegex = """(.*) ([IDWVE])(\/.+)+\ *(\( \d*\)): (.*)""".toRegex()
                     val matches = logcatRegex.findAll(line).first()
                     val time = matches.groupValues[1]
                     val level = matches.groupValues[2]
@@ -134,8 +136,7 @@ data class Event(
 
 data class Config(
     val ip: String,
-    val port: Int,
-    val coroutineScope: CoroutineScope,
+    val port: Int = 1234,
     val packageName: String
 )
 
