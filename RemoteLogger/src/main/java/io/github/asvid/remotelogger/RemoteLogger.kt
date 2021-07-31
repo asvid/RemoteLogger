@@ -1,10 +1,18 @@
 package io.github.asvid.remotelogger
 
+import android.util.Log
+import io.github.asvid.remotelogger.fifo.FifoQueue
+import io.github.asvid.remotelogger.fifo.FifoQueueImpl
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.lang.Exception
+import java.util.concurrent.Executors
 
 object RemoteLogger {
     private lateinit var config: Config
@@ -13,7 +21,7 @@ object RemoteLogger {
     }
     var session: DefaultClientWebSocketSession? = null
 
-    fun doStuff() = "hey mate!"
+    val events = Channel<Event>()
 
     fun initialize(config: Config) {
         // start websocket at provided IP
@@ -21,18 +29,38 @@ object RemoteLogger {
         // start sending messages
         this.config = config
         config.coroutineScope.launch {
+            readLogcatStream()
             client.webSocket(host = config.ip, port = config.port) {
                 session = this
                 this.send("we have a connection from Android")
+                readLogcatStream()
+                startSendingLogsFromQueue()
             }
         }
     }
 
-    fun logEvent(event: Event) {
-        if (session == null) throw Exception("not initialized!")
-        // todo: cache events untill its possible to send them, nothing can be lost
-        config.coroutineScope.launch {
-            session?.send(event.toString())
+    private suspend fun logEvent(event: Event) {
+        events.send(event)
+    }
+
+    private suspend fun startSendingLogsFromQueue() {
+        events.consumeEach {
+            session?.send(it.toString())
+        }
+    }
+
+    private fun readLogcatStream() {
+        CoroutineScope(
+            Executors.newSingleThreadExecutor().asCoroutineDispatcher()).launch{
+
+            val loggingProcess = Runtime.getRuntime().exec("logcat ${config.packageName} -v time")
+
+            val inputstr = InputStreamReader(loggingProcess.inputStream)
+            val buff = BufferedReader(inputstr)
+            while(true){
+                val line = buff.readLine()
+                logEvent(Event("LOGCAT", line))
+            }
         }
     }
 }
@@ -41,4 +69,9 @@ object RemoteLogger {
 
 data class Event(val tag: String, val message: String)
 
-data class Config(val ip: String, val port: Int, val coroutineScope: CoroutineScope)
+data class Config(
+    val ip: String,
+    val port: Int,
+    val coroutineScope: CoroutineScope,
+    val packageName: String
+)
