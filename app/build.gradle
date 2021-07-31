@@ -3,6 +3,8 @@ plugins {
     id 'kotlin-android'
 }
 
+group = 'com.github.asvid.remotelogger.app'
+
 android {
     compileSdk 30
 
