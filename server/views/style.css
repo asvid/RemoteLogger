@@ -13,3 +13,17 @@
 .VERBOSE {
 	color: gray;
 }
+body{
+	font-family: monospace;
+}
+ul{
+	list-style-type: none;
+  	padding: 0;
+  	margin: 0;
+}
+li:nth-child(odd) {
+    background-color: azure;
+}
+li:nth-child(even) {
+    background-color: gainsboro;
+}

@@ -7,4 +7,4 @@ html
     h1= message
     ul
       each event in data
-          li(class=event.type)!= '<b>['+event.type+'] '+event.tag+'</b>  : ' + event.message
+          li(class=event.type)!= '<b>['+event.type+'] '+event.tag+'</b>  : ' + '<span style="white-space: pre-wrap">'+event.message+'</span>'
