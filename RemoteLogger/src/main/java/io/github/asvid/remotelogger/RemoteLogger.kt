@@ -7,30 +7,32 @@ import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.util.*
 import java.util.concurrent.Executors
 import kotlin.system.exitProcess
-import kotlinx.serialization.*
-import kotlinx.serialization.json.Json
-import java.util.*
 
-object RemoteLogger {
+class RemoteLogger {
     private lateinit var config: Config
     private val client = HttpClient {
         install(WebSockets)
     }
     var session: DefaultClientWebSocketSession? = null
 
-    private val events = Channel<Event>()
+    private var events: Channel<Event>? = null
 
     fun initialize(config: Config) {
-        RemoteLogger.config = config
+        this.config = config
+        events = Channel<Event>()
         connect()
-
     }
 
     // todo: some reconect policy? WS pinging?
@@ -67,11 +69,11 @@ object RemoteLogger {
     }
 
     private suspend fun logEvent(event: Event) {
-        events.send(event)
+        events?.send(event)
     }
 
     private suspend fun startSendingLogsFromQueue() {
-        events.consumeEach {
+        events?.receiveAsFlow()?.collect {
             if (client.isActive)
                 sentEventViaWs(it)
             else {
@@ -88,8 +90,10 @@ object RemoteLogger {
         CoroutineScope(
             Executors.newSingleThreadExecutor().asCoroutineDispatcher()
         ).launch {
+            cleanLogcat()
 
-            val loggingProcess = Runtime.getRuntime().exec("logcat ${config.packageName} -v time")
+            val loggingProcess = Runtime.getRuntime()
+                .exec("logcat ${config.packageName} -v time")
 
             val inputstr = InputStreamReader(loggingProcess.inputStream)
             val buff = BufferedReader(inputstr)
@@ -108,6 +112,13 @@ object RemoteLogger {
                 }
             }
         }
+    }
+
+    private fun cleanLogcat() {
+        ProcessBuilder()
+            .command("logcat", "-c")
+            .redirectErrorStream(true)
+            .start()
     }
 }
 

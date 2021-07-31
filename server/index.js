@@ -15,7 +15,6 @@ wsServer.on('connection', socket => {
 	events.clear();
 	console.log("clearing events");
 	socket.on('message', message =>{
-		console.log(message);
 		events.add(JSON.parse(message))
 	})
 });

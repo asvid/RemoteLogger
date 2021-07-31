@@ -13,7 +13,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         Log.d("APP", "onCreate")
-        RemoteLogger.initialize(
+        RemoteLogger().initialize(
             Config(
                 "192.168.1.87",
                 1234,
