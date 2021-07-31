@@ -1,0 +1,15 @@
+.ERROR {
+	color: red;
+}
+.WARNING {
+	color: yellowgreen;
+}
+.INFO {
+	color: blue;
+}
+.DEBUG {
+	color: black;
+}
+.VERBOSE {
+	color: gray;
+}

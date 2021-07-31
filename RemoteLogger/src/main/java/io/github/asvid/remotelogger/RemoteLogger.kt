@@ -38,7 +38,6 @@ object RemoteLogger {
             readLogcatStream()
             client.webSocket(host = config.ip, port = config.port) {
                 session = this
-                this.send("we have a connection from Android")
                 startSendingLogsFromQueue()
             }
         }

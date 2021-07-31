@@ -1,8 +1,10 @@
 html
   head
     title= title
+    style
+      include style.css
   body
     h1= message
     ul
-      each element in data
-          li= element
+      each event in data
+          li(class=event.type)!= '<b>['+event.type+'] '+event.tag+'</b>  : ' + event.message
