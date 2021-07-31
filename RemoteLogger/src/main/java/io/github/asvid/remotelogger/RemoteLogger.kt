@@ -16,6 +16,7 @@ import java.util.concurrent.Executors
 import kotlin.system.exitProcess
 import kotlinx.serialization.*
 import kotlinx.serialization.json.Json
+import java.util.*
 
 object RemoteLogger {
     private lateinit var config: Config
@@ -48,7 +49,12 @@ object RemoteLogger {
         Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
             config.coroutineScope.launch {
                 Log.e("AndroidRuntime", "--->uncaughtException:$paramThread<---", paramThrowable);
-                val event = Event("CRASH", paramThrowable.stackTraceToString(), EventType.ERROR)
+                val event = Event(
+                    "CRASH",
+                    paramThrowable.stackTraceToString(),
+                    EventType.ERROR,
+                    Date().toString()
+                )
                 sentEventViaWs(event)
                 close()
                 exitProcess(1)
@@ -92,12 +98,13 @@ object RemoteLogger {
                 kotlin.runCatching {
                     val logcatRegex = """(.*) ([IDWVE])(\/.+)+\ *(\(\d*\)): (.*)""".toRegex()
                     val matches = logcatRegex.findAll(line).first()
+                    val time = matches.groupValues[1]
                     val level = matches.groupValues[2]
                     val tag = matches.groupValues[3].drop(1)
                     val message = matches.groupValues[5]
-                    logEvent(Event(tag, message, level.toEventType()))
+                    logEvent(Event(tag, message, level.toEventType(), time))
                 }.onFailure {
-                    logEvent(Event("LOGGER", line, EventType.DEBUG))
+                    logEvent(Event("LOGGER", line, EventType.DEBUG, Date().toString()))
                 }
             }
         }
@@ -107,7 +114,12 @@ object RemoteLogger {
 enum class EventType { INFO, ERROR, DEBUG, VERBOSE, WARNING }
 
 @Serializable
-data class Event(val tag: String, val message: String, val type: EventType)
+data class Event(
+    val tag: String,
+    val message: String,
+    val type: EventType,
+    val time: String? = null
+)
 
 data class Config(
     val ip: String,
@@ -116,8 +128,8 @@ data class Config(
     val packageName: String
 )
 
-private fun Event.toJson()= Json.encodeToString(this)
-private fun String.toEventType(): EventType = when(this){
+private fun Event.toJson() = Json.encodeToString(this)
+private fun String.toEventType(): EventType = when (this) {
     "D" -> EventType.DEBUG
     "I" -> EventType.INFO
     "E" -> EventType.ERROR
