@@ -4,6 +4,9 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.20'
 }
 
+group = 'com.github.asvid.remotelogger'
+version = '0.0.1'
+
 android {
     signingConfigs {
         release {
@@ -47,3 +50,4 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
+
