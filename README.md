@@ -13,7 +13,23 @@ Then run `node index.js`. If you want to run at specific port, then use `WS_PORT
 Server will open the browser with logs page, but it won't refresh automatically, you have to do it manually.
 
 ### Android
-in Android app, init the library in the Application class
+Add Jitpack to your repositories in root `build.gradle` or `settings.gradle`:
+```groovy
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+And library dependency in project:
+```groovy
+	dependencies {
+	        implementation 'com.github.asvid:RemoteLogger:0.2.0'
+	}
+```
+
+In Android app, init the library in the Application class `onCreate()` method, like this:
 ```kotlin
 RemoteLogger().initialize(
     Config(
