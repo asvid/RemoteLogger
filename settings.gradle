@@ -6,5 +6,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "RemoteLogger"
-include ':app'
-include ':RemoteLogger'
+include ':ExampleApp'
+include ':RemoteLoggerLib'
