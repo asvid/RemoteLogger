@@ -1,4 +1,4 @@
-package io.github.asvid.remotelogger
+package com.github.asvid.remotelogger
 
 import android.util.Log
 import io.ktor.client.*

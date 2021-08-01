@@ -1,4 +1,4 @@
-package io.github.asvid.remoteloggerapp.ui.theme
+package com.github.asvid.remoteloggerapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

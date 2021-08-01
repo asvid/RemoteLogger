@@ -1,12 +1,9 @@
-package io.github.asvid.remoteloggerapp
+package com.github.asvid.remoteloggerapp
 
 import android.app.Application
 import android.util.Log
-import io.github.asvid.remotelogger.Config
-import io.github.asvid.remotelogger.RemoteLogger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
-import java.util.concurrent.Executors
+import com.github.asvid.remotelogger.Config
+import com.github.asvid.remotelogger.RemoteLogger
 
 class App : Application() {
 

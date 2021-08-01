@@ -1,4 +1,4 @@
-package io.github.asvid.remoteloggerapp
+package com.github.asvid.remoteloggerapp
 
 import android.os.Bundle
 import android.util.Log
@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import io.github.asvid.remoteloggerapp.ui.theme.RemoteLoggerTheme
+import com.github.asvid.remoteloggerapp.ui.theme.RemoteLoggerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

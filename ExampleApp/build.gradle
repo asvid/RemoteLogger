@@ -3,13 +3,13 @@ plugins {
     id 'kotlin-android'
 }
 
-group = 'io.github.asvid'
+group = 'com.github.asvid'
 
 android {
     compileSdk 30
 
     defaultConfig {
-        applicationId "io.github.asvid.remoteloggerapp"
+        applicationId "com.github.asvid.remoteloggerapp"
         minSdk 24
         targetSdk 30
         versionCode 1
