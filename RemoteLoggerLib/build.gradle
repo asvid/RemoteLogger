@@ -5,8 +5,9 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'com.github.asvid.remotelogger'
-version = '0.1.5'
+group = 'io.github.asvid'
+version = '0.1.6'
+def artifact = 'RemoteLogger'
 
 android {
     signingConfigs {
@@ -58,11 +59,10 @@ afterEvaluate {
             // Creates a Maven publication called "release".
             release(MavenPublication) {
                 from components.release
-                groupId = 'com.github.jitpack'
-                artifactId = 'android-example'
-                version = '1.0'
+                groupId = group
+                artifactId = artifact
+                version = version
             }
         }
     }
 }
-
