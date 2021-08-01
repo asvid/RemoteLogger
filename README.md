@@ -1,9 +1,9 @@
-# RemoteLogger
-[![](https://jitpack.io/v/asvid/RemoteLogger.svg)](https://jitpack.io/#asvid/RemoteLogger)
-Library that allows to send Logcat logs via websocket to server hosted on developer machine - useful when app has to be in release mode without developer options turned on (real live case...)
+# RemoteLogger [![](https://jitpack.io/v/asvid/RemoteLogger.svg)](https://jitpack.io/#asvid/RemoteLogger)
 
-## Work in progress
-I probably butchered ExpressJS and Kotlin Coroutines here, but well, it works :)
+Little tool that allows Android apps to send Logcat logs via websocket to server hosted on a developer machine - useful when the app has to be in release mode without developer options turned on (real live case...)
+
+> This is work in progress.
+> I probably butchered ExpressJS and Kotlin Coroutines here, but well, it works :)
 
 ## How to run
 This is very specific use-case dev tool, it's not mentioned to be user friendly.
