@@ -1,4 +1,5 @@
 # RemoteLogger
+[![](https://jitpack.io/v/asvid/RemoteLogger.svg)](https://jitpack.io/#asvid/RemoteLogger)
 Library that allows to send Logcat logs via websocket to server hosted on developer machine - useful when app has to be in release mode without developer options turned on (real live case...)
 
 ## Work in progress
