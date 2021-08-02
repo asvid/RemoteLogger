@@ -52,3 +52,6 @@ Each application restart clears the logs.
 When app crashes the exception is also logged remotely, and then app exits with code `1`.
 
 You can still see the logs in Android Studio Logcat, the hijacking is transparent :)
+
+# Licence
+MIT - Check the details [here](./LICENSE)
