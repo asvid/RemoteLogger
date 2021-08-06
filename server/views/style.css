@@ -2,10 +2,10 @@
 	color: red;
 }
 .WARNING {
-	color: yellowgreen;
+	color: #FD8008;
 }
 .INFO {
-	color: blue;
+	color: #0028FF;
 }
 .DEBUG {
 	color: black;
