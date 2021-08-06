@@ -4,13 +4,11 @@ import android.util.Log
 import io.ktor.client.*
 import io.ktor.client.features.websocket.*
 import io.ktor.http.cio.websocket.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -19,6 +17,8 @@ import java.io.InputStreamReader
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.system.exitProcess
+
+const val DEFAULT_PORT = 1234
 
 class RemoteLogger {
     private lateinit var config: Config
@@ -35,12 +35,12 @@ class RemoteLogger {
 
     fun initialize(config: Config) {
         this.config = config
-        events = Channel()
+        events = Channel(UNLIMITED)
         connect()
     }
 
-    // todo: some reconect policy? WS pinging?
-    fun connect() {
+    // todo: some reconnect policy? WS pinging?
+    private fun connect() {
         wsScope.launch {
             readLogcatStream()
             client.webSocket(host = config.ip, port = config.port) {
@@ -58,7 +58,7 @@ class RemoteLogger {
                 val event = Event(
                     "CRASH",
                     paramThrowable.stackTraceToString(),
-                    EventType.ERROR,
+                    EventLevel.ERROR,
                     Date().toString()
                 )
                 sentEventViaWs(event)
@@ -68,7 +68,7 @@ class RemoteLogger {
         }
     }
 
-    fun close() {
+    private fun close() {
         client.close()
     }
 
@@ -91,7 +91,7 @@ class RemoteLogger {
     }
 
     private fun readLogcatStream() {
-        logcatScope.launch {
+        logcatScope.launch(Dispatchers.IO) {
             cleanLogcat()
 
             val loggingProcess = Runtime.getRuntime()
@@ -110,7 +110,7 @@ class RemoteLogger {
                     val message = matches.groupValues[5]
                     logEvent(Event(tag, message, level.toEventType(), time))
                 }.onFailure {
-                    logEvent(Event("LOGGER", line, EventType.DEBUG, Date().toString()))
+                    logEvent(Event("LOGGER", line, EventLevel.DEBUG, Date().toString()))
                 }
             }
         }
@@ -124,28 +124,28 @@ class RemoteLogger {
     }
 }
 
-enum class EventType { INFO, ERROR, DEBUG, VERBOSE, WARNING }
+enum class EventLevel { INFO, ERROR, DEBUG, VERBOSE, WARNING }
 
 @Serializable
 data class Event(
     val tag: String,
     val message: String,
-    val type: EventType,
+    val level: EventLevel,
     val time: String? = null
 )
 
 data class Config(
     val ip: String,
-    val port: Int = 1234,
+    val port: Int = DEFAULT_PORT,
     val packageName: String
 )
 
 private fun Event.toJson() = Json.encodeToString(this)
-private fun String.toEventType(): EventType = when (this) {
-    "D" -> EventType.DEBUG
-    "I" -> EventType.INFO
-    "E" -> EventType.ERROR
-    "V" -> EventType.VERBOSE
-    "W" -> EventType.WARNING
-    else -> EventType.DEBUG
+private fun String.toEventType(): EventLevel = when (this) {
+    "D" -> EventLevel.DEBUG
+    "I" -> EventLevel.INFO
+    "E" -> EventLevel.ERROR
+    "V" -> EventLevel.VERBOSE
+    "W" -> EventLevel.WARNING
+    else -> EventLevel.DEBUG
 }
