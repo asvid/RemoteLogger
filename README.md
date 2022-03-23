@@ -54,4 +54,4 @@ When app crashes the exception is also logged remotely, and then app exits with 
 You can still see the logs in Android Studio Logcat, the hijacking is transparent :)
 
 # Licence
-MIT - Check the details [here](./LICENSE)
+MIT - Check the details [here](./LICENSE.md)
