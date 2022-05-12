@@ -1,12 +1,12 @@
 plugins {
     id 'com.android.library'
     id 'kotlin-android'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.20'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.6.10'
     id 'maven-publish'
 }
 
 group = 'com.github.asvid'
-version = '0.2.2'
+version = '0.2.3'
 def artifact = 'RemoteLogger'
 
 android {
