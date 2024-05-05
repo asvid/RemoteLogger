@@ -47,14 +47,10 @@ func main() {
 	myFigure := figure.NewFigure("Remote Logger", "doom", true)
 	myFigure.Print()
 
-	//	currentTime := time.Now()
-	// formattedDate := currentTime.Format("2006-01-02-15-04-05")
-	// fileName := fmt.Sprintf("logs-%s.txt", formattedDate)
-
-	port := flag.Int("port", 3000, "Provide port for running Remote Logger")
-	logLevelStr := flag.String("logLevel", "", "Show only provided level of logs")
-	tag := flag.String("tag", "", "Show only logs with provided tag")
-	toFile := flag.String("toFile", "", "Save logs to provided file")
+	port := flag.Int("p", 3000, "Set port for running Remote Logger.")
+	logLevelStr := flag.String("ll", "", "Display only logs at provided level, available options: INFO, ERROR, DEBUG, VERBOSE, WARNING.")
+	tag := flag.String("t", "", "Display only logs with provided tag.")
+	toFile := flag.String("f", "", "Save logs to file with povided name. Log filters do not apply here.")
 
 	flag.Parse()
 
