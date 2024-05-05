@@ -1,0 +1,10 @@
+flag provided but not defined: -1
+Usage of /var/folders/pw/_hs0d9vj78n805py9cmdhyhr0000gn/T/go-build2995013444/b001/exe/remotelogger:
+flag provided but not defined: -1
+Usage of /var/folders/pw/_hs0d9vj78n805py9cmdhyhr0000gn/T/go-build2995013444/b001/exe/remotelogger:
+  -port int
+    	Provide port for running Remote Logger (default 3000)
+  -port int
+    	Provide port for running Remote Logger (default 3000)
+exit status 2
+exit status 2
