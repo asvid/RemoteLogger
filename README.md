@@ -1,91 +1,144 @@
-# RemoteLogger [![](https://jitpack.io/v/asvid/RemoteLogger.svg)](https://jitpack.io/#asvid/RemoteLogger)
+# RemoteLogger
 
-Little tool that allows Android apps to send Logcat logs via websocket to server hosted on a developer machine - useful when the app has to be in release mode without developer options turned on (real live case...)
+Stream Android Logcat over WebSocket to a terminal UI on your dev machine. Useful when the device must run in release mode without developer options (USB debugging off, production build, etc.).
 
-## How to run
+## How it works
 
-There is legacy ExpressJS app in `/server`, and a rewrite in Go in `/serverGo`.
-
-### Run server first
-
-#### NodeJS
-
-Go to `server` directory and run `npm install` to get all dependencies.
-Then run `node index.js`. If you want to run at specific port, then use `WS_PORT=1111 node index.js`.
-Server will open the browser with logs page, but it won't refresh automatically, you have to do it manually.
-
-![terminal look](./readme/terminal.png)
-This service creates a website on localhost that displays all logs. You have to refresh it manually.
-![bui](./readme/bui.png)
-
-#### Go
-
-Simply run `./serverGo/remotelogger` from command line. There are few optional parameters available:
+The Android library reads Logcat, serializes each log line as JSON, and sends it over WebSocket to the Go server. The server displays logs in a terminal UI with filtering, level colors, and file export.
 
 ```
-./remotelogger -h
-______                          _            _
-| ___ \                        | |          | |
-| |_/ /  ___  _ __ ___    ___  | |_   ___   | |      ___    __ _   __ _   ___  _ __
-|    /  / _ \| '_ ` _ \  / _ \ | __| / _ \  | |     / _ \  / _` | / _` | / _ \| '__|
-| |\ \ |  __/| | | | | || (_) || |_ |  __/  | |____| (_) || (_| || (_| ||  __/| |
-\_| \_| \___||_| |_| |_| \___/  \__| \___|  \_____/ \___/  \__, | \__, | \___||_|
-                                                            __/ |  __/ |
-                                                           |___/  |___/
-Usage of ./remotelogger:
-  -f string
-    	Save logs to file with povided name. Log filters do not apply here.
-  -ll string
-    	Display only logs at provided level, available options: INFO, ERROR, DEBUG, VERBOSE, WARNING.
-  -p int
-    	Set port for running Remote Logger. (default 3000)
-  -t string
-    	Display only logs with provided tag.
+Android device  ──WebSocket──▶  Go server (TUI)
+  logcat reader                    filter / scroll / save
 ```
 
-This app doesn't provide browser user interface, logs are displayed in terminal when the server is running, or saved to file.
+---
 
-### Android
+## Server
 
-Add Jitpack to your repositories in root `build.gradle` or `settings.gradle`:
+### Build
+
+```bash
+cd serverGo
+go build -o remotelogger .
+```
+
+### Run
+
+```bash
+./remotelogger
+```
+
+Default port is `3000`. Your IP will be shown at startup — use it in the Android config.
+
+#### Flags
+
+```
+-p int      Port (default 3000)
+-ll string  Show only logs at this level: VERBOSE | DEBUG | INFO | WARNING | ERROR
+-t string   Show only logs with this tag
+-f string   Also write all logs to file (filters do not apply to file output)
+-no-tui     Plain stdout — useful for piping or CI
+```
+
+#### Examples
+
+```bash
+# filter to errors only
+./remotelogger -ll ERROR
+
+# filter by tag and write everything to file
+./remotelogger -t MyActivity -f session.log
+
+# pipe to grep (no TUI)
+./remotelogger -no-tui | grep "NullPointer"
+
+# custom port
+./remotelogger -p 8080
+```
+
+### TUI keybindings
+
+| Key | Action |
+|-----|--------|
+| `/` | Focus text search (searches tag + message) |
+| `t` | Focus tag filter |
+| `l` | Cycle level filter: ALL → VERBOSE → DEBUG → INFO → WARNING → ERROR |
+| `c` | Clear all filters |
+| `s` | Save snapshot of all logs to a timestamped file |
+| `G` | Jump to latest log, re-enable auto-scroll |
+| `↑` / `pgup` | Scroll up, disables auto-scroll |
+| `q` / `ctrl+c` | Quit |
+
+---
+
+## Android
+
+### Dependency
+
+Add to your project-level `settings.gradle` (or `build.gradle`):
 
 ```groovy
-allprojects {
-    repositories {
-        ...
-        maven { url 'https://jitpack.io' }
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+```
+
+Add the library — use `debugImplementation` so it does not ship in release builds:
+
+```groovy
+dependencies {
+    debugImplementation 'com.github.asvid:RemoteLogger:0.2.3'
+}
+```
+
+### Setup
+
+Initialize in your `Application` class:
+
+```kotlin
+class App : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        RemoteLogger().initialize(
+            Config(
+                host = "192.168.1.87",    // your machine's IP shown by the server on startup
+                port = 3000,
+                packageName = applicationContext.packageName,
+            )
+        )
     }
 }
 ```
 
-And library dependency in project:
+Register `App` in `AndroidManifest.xml`:
 
-```groovy
-	dependencies {
-	        implementation 'com.github.asvid:RemoteLogger:0.2.0'
-	}
+```xml
+<application android:name=".App" ...>
 ```
 
-In Android app, init the library in the Application class `onCreate()` method, like this:
+### Config options
 
 ```kotlin
-RemoteLogger().initialize(
-    Config(
-        "192.168.1.87", // your server IP, will be displayed in CMD after server is started
-        1234, // optional port
-        applicationContext.packageName // package name, required for proper LogCat filtering
-    )
+Config(
+    host = "192.168.1.87",
+    port = 3000,
+    packageName = applicationContext.packageName,
+    reconnectOnDisconnect = true,   // auto-reconnect when server restarts (default: true)
+    reconnectDelayMs = 3000L,       // initial reconnect delay, doubles up to 30s (default: 3000)
+    sendHistoryOnConnect = true,    // replay buffered logs on reconnect (default: true)
 )
 ```
 
-After `initialize()` is called, websocket tries to connect to server so it has to be started first.
-After it connects it sends all the logs that were already gathered by LogCat, so nothing is lost.
-Each application restart clears the logs.
+### Behavior
 
-When app crashes the exception is also logged remotely, and then app exits with code `1`.
+- On `initialize()`, Logcat is cleared and the library starts reading it immediately. Logs are buffered in memory until the WebSocket connects.
+- On connect, all buffered logs are sent first — nothing is lost during connection setup.
+- If the connection drops (e.g. server restart), it reconnects automatically with exponential backoff.
+- App crashes are caught, sent as an `ERROR` event tagged `CRASH`, then the process exits with code `1`.
+- Logcat is still visible in Android Studio normally — the library is transparent.
 
-You can still see the logs in Android Studio Logcat, the hijacking is transparent :)
+---
 
-# Licence
+## Licence
 
-MIT - Check the details [here](./LICENSE.md)
+MIT — see [LICENSE.md](./LICENSE.md)

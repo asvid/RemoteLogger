@@ -11,9 +11,10 @@ class App : Application() {
         super.onCreate()
         RemoteLogger().initialize(
             Config(
-                "192.168.1.87",
-                1234,
-                applicationContext.packageName
+                host = "192.168.1.87",
+                port = 3000,
+                packageName = applicationContext.packageName,
+                reconnectOnDisconnect = true,
             )
         )
     }
