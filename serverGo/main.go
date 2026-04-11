@@ -1,14 +1,17 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
 	figure "github.com/common-nighthawk/go-figure"
+	"remotelogger/cert"
 	"remotelogger/logentry"
 	"remotelogger/tui"
 	"remotelogger/ws"
@@ -25,15 +28,32 @@ func main() {
 	noTUI := flag.Bool("no-tui", false, "Plain stdout output, suitable for piping or CI")
 	flag.Parse()
 
+	certInfo, err := cert.LoadOrGenerate()
+	if err != nil {
+		log.Fatal("Certificate error", "err", err)
+	}
+
+	log.Info("Certificate location", "path", certInfo.Dir)
+	log.Info("Server IP", "ip", localIP())
+	log.Info("──────────────────────────────────────────────────────")
+	log.Info("Android Config pin (copy this):", "certPin", certInfo.Fingerprint)
+	log.Info("──────────────────────────────────────────────────────")
+
 	wsServer := ws.NewServer()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", wsServer.Handler)
 
 	go func() {
-		addr := fmt.Sprintf(":%d", *port)
-		log.Info("WebSocket server listening", "port", *port)
-		if err := http.ListenAndServe(addr, mux); err != nil {
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{certInfo.TLSCert},
+		}
+		ln, err := tls.Listen("tcp", fmt.Sprintf(":%d", *port), tlsConfig)
+		if err != nil {
+			log.Fatal("Listen error", "err", err)
+		}
+		log.Info("WebSocket server listening (WSS)", "port", *port)
+		if err := http.Serve(ln, mux); err != nil {
 			log.Fatal("Server error", "err", err)
 		}
 	}()
@@ -106,4 +126,20 @@ func runPlain(s *ws.Server, toFile, levelStr, tagFilter string) {
 			fmt.Printf("[%s] %s: %s\n", tui.StyledLevel(e.Level), e.Tag, e.Message)
 		}
 	}
+}
+
+// localIP returns the first non-loopback IPv4 address, for display convenience.
+func localIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "unknown"
+	}
+	for _, a := range addrs {
+		if ipnet, ok := a.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ip4 := ipnet.IP.To4(); ip4 != nil {
+				return ip4.String()
+			}
+		}
+	}
+	return "unknown"
 }

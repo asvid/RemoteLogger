@@ -15,8 +15,13 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.security.MessageDigest
+import java.security.cert.CertificateException
+import java.security.cert.X509Certificate
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
+import javax.net.ssl.X509TrustManager
 import kotlin.math.min
 import kotlin.system.exitProcess
 
@@ -24,21 +29,37 @@ const val DEFAULT_PORT = 3000
 
 class RemoteLogger {
     private lateinit var config: Config
+    private lateinit var client: OkHttpClient
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    private val client = OkHttpClient.Builder()
-        .pingInterval(20, TimeUnit.SECONDS)
-        .build()
 
     private var webSocket: WebSocket? = null
     private var events: Channel<Event>? = null
 
     fun initialize(config: Config) {
         this.config = config
+        this.client = buildClient(config)
         events = Channel(UNLIMITED)
         scope.launch { readLogcatStream() }
         scope.launch { connectWithBackoff() }
         setAppCrashListener()
+    }
+
+    private fun buildClient(config: Config): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+            .pingInterval(20, TimeUnit.SECONDS)
+
+        if (config.certPin != null) {
+            val trustManager = PinnedCertTrustManager(config.certPin)
+            val sslContext = SSLContext.getInstance("TLS")
+            sslContext.init(null, arrayOf(trustManager), null)
+            builder
+                .sslSocketFactory(sslContext.socketFactory, trustManager)
+                // Hostname verification is skipped because we connect to an IP address,
+                // not a hostname. The cert is still validated against certPin.
+                .hostnameVerifier { _, _ -> true }
+        }
+
+        return builder.build()
     }
 
     private suspend fun connectWithBackoff() {
@@ -52,19 +73,21 @@ class RemoteLogger {
             }
             firstAttempt = false
 
-            val connected = suspendCancellableCoroutine<Boolean> { cont ->
+            val scheme = if (config.certPin != null) "wss" else "ws"
+
+            suspendCancellableCoroutine<Boolean> { cont ->
                 val request = Request.Builder()
-                    .url("ws://${config.host}:${config.port}")
+                    .url("$scheme://${config.host}:${config.port}")
                     .build()
 
                 val ws = client.newWebSocket(request, object : WebSocketListener() {
                     override fun onOpen(ws: WebSocket, response: Response) {
                         webSocket = ws
-                        delayMs = config.reconnectDelayMs // reset backoff on success
-                        Log.i("RemoteLogger", "Connected to ${config.host}:${config.port}")
+                        delayMs = config.reconnectDelayMs
+                        Log.i("RemoteLogger", "Connected to ${config.host}:${config.port} ($scheme)")
 
                         if (!config.sendHistoryOnConnect) {
-                            events?.tryReceive() // drain
+                            events?.tryReceive()
                         }
                         scope.launch { drainQueueToWs() }
                     }
@@ -144,6 +167,31 @@ class RemoteLogger {
     }
 }
 
+/**
+ * Trusts only the certificate whose SubjectPublicKeyInfo SHA-256 hash matches [expectedPin].
+ * The pin format is "sha256/base64==" — copy it from the server startup output.
+ */
+private class PinnedCertTrustManager(private val expectedPin: String) : X509TrustManager {
+
+    override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
+        val cert = chain[0]
+        // SubjectPublicKeyInfo is what publicKey.encoded returns for X.509 certs —
+        // identical to what the Go server hashes with RawSubjectPublicKeyInfo.
+        val spki = cert.publicKey.encoded
+        val hash = MessageDigest.getInstance("SHA-256").digest(spki)
+        val pin = "sha256/" + android.util.Base64.encodeToString(hash, android.util.Base64.NO_WRAP)
+
+        if (pin != expectedPin) {
+            throw CertificateException(
+                "Certificate pin mismatch.\n  expected: $expectedPin\n  got:      $pin"
+            )
+        }
+    }
+
+    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) = Unit
+    override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+}
+
 enum class EventLevel { INFO, ERROR, DEBUG, VERBOSE, WARNING }
 
 @Serializable
@@ -161,6 +209,10 @@ data class Config(
     val reconnectOnDisconnect: Boolean = true,
     val reconnectDelayMs: Long = 3_000L,
     val sendHistoryOnConnect: Boolean = true,
+    /** SHA-256 pin of the server certificate's public key — printed at server startup.
+     *  Format: "sha256/base64==". When set, the connection uses WSS (encrypted).
+     *  When null, plain WS is used (backward compatible, less secure). */
+    val certPin: String? = null,
 )
 
 private fun Event.toJson() = Json.encodeToString(this)

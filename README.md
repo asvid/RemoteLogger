@@ -92,27 +92,19 @@ dependencies {
 
 The library is intended for **release builds** — its purpose is to surface logs from builds where Android Studio Logcat is unavailable (release mode, no developer options). Add it to `implementation`, not `debugImplementation`.
 
-### Network security
-
-Android 9+ blocks cleartext (non-TLS) traffic by default. Since RemoteLogger connects over plain WebSocket, add a network security config:
-
-`res/xml/network_security_config.xml`:
-```xml
-<network-security-config>
-    <base-config cleartextTrafficPermitted="true" />
-</network-security-config>
-```
-
-Reference it in `AndroidManifest.xml`:
-```xml
-<application
-    android:networkSecurityConfig="@xml/network_security_config"
-    ...>
-```
-
 ### Setup
 
-Initialize in your `Application` class:
+The server prints a certificate pin on every startup:
+
+```
+Certificate location  path=/Users/you/Library/Application Support/remotelogger
+Server IP             ip=192.168.1.87
+──────────────────────────────────────────────────────
+Android Config pin (copy this):  certPin=sha256/abc123==
+──────────────────────────────────────────────────────
+```
+
+Copy the pin and pass it to `Config`. The connection will use `wss://` (encrypted + authenticated):
 
 ```kotlin
 class App : Application() {
@@ -120,13 +112,28 @@ class App : Application() {
         super.onCreate()
         RemoteLogger().initialize(
             Config(
-                host = "192.168.1.87",    // your machine's IP shown by the server on startup
+                host = "192.168.1.87",
                 port = 3000,
                 packageName = applicationContext.packageName,
+                certPin = "sha256/abc123==",   // from server startup output
             )
         )
     }
 }
+```
+
+The certificate is generated once and stored on your machine. The pin stays the same until you delete `cert.pem` from the config directory shown at startup.
+
+`certPin` is optional — omitting it falls back to plain `ws://` (no encryption). In that case, add a network security config to allow cleartext traffic on Android 9+:
+
+`res/xml/network_security_config.xml`:
+```xml
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
+```
+```xml
+<application android:networkSecurityConfig="@xml/network_security_config" ...>
 ```
 
 Register `App` in `AndroidManifest.xml`:
@@ -142,6 +149,7 @@ Config(
     host = "192.168.1.87",
     port = 3000,
     packageName = applicationContext.packageName,
+    certPin = "sha256/abc123==",    // from server startup — enables WSS
     reconnectOnDisconnect = true,   // auto-reconnect when server restarts (default: true)
     reconnectDelayMs = 3000L,       // initial reconnect delay, doubles up to 30s (default: 3000)
     sendHistoryOnConnect = true,    // replay buffered logs on reconnect (default: true)
