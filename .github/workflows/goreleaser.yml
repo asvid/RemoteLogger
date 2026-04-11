@@ -3,6 +3,8 @@ name: Release Go Server
 on:
   release:
     types: [created]
+    tags:
+      - 'server-v*'
 
 jobs:
   goreleaser:

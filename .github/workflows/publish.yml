@@ -3,6 +3,8 @@ name: Publish to Maven Central
 on:
   release:
     types: [created]
+    tags:
+      - 'lib-v*'
 
 jobs:
   publish:
