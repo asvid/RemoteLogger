@@ -15,7 +15,14 @@ Android device  ──WebSocket──▶  Go server (TUI)
 
 ## Server
 
-### Build
+### Install
+
+```bash
+brew tap asvid/tap
+brew install remotelogger
+```
+
+### Build from source
 
 ```bash
 cd serverGo
@@ -25,7 +32,7 @@ go build -o remotelogger .
 ### Run
 
 ```bash
-./remotelogger
+remotelogger
 ```
 
 Default port is `3000`. Your IP will be shown at startup — use it in the Android config.
@@ -44,16 +51,16 @@ Default port is `3000`. Your IP will be shown at startup — use it in the Andro
 
 ```bash
 # filter to errors only
-./remotelogger -ll ERROR
+remotelogger -ll ERROR
 
 # filter by tag and write everything to file
-./remotelogger -t MyActivity -f session.log
+remotelogger -t MyActivity -f session.log
 
 # pipe to grep (no TUI)
-./remotelogger -no-tui | grep "NullPointer"
+remotelogger -no-tui | grep "NullPointer"
 
 # custom port
-./remotelogger -p 8080
+remotelogger -p 8080
 ```
 
 ### TUI keybindings
@@ -75,21 +82,15 @@ Default port is `3000`. Your IP will be shown at startup — use it in the Andro
 
 ### Dependency
 
-Add to your project-level `settings.gradle` (or `build.gradle`):
+No extra repository needed — the library is on Maven Central:
 
-```groovy
-repositories {
-    maven { url 'https://jitpack.io' }
-}
-```
-
-Add the library — use `debugImplementation` so it does not ship in release builds:
-
-```groovy
+```kotlin
 dependencies {
-    debugImplementation 'com.github.asvid:RemoteLogger:0.2.3'
+    debugImplementation("io.github.asvid:remote-logger:1.0.2")
 }
 ```
+
+Use `debugImplementation` so it does not ship in release builds.
 
 ### Network security
 
