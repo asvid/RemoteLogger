@@ -4,8 +4,7 @@ project_name: remotelogger
 
 before:
   hooks:
-    - cmd: go mod tidy
-      dir: serverGo
+    - sh -c "cd serverGo && go mod tidy"
 
 builds:
   - id: remotelogger
