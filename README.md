@@ -86,11 +86,11 @@ No extra repository needed — the library is on Maven Central:
 
 ```kotlin
 dependencies {
-    debugImplementation("io.github.asvid:remote-logger:1.0.2")
+    implementation("io.github.asvid:remote-logger:1.0.2")
 }
 ```
 
-Use `debugImplementation` so it does not ship in release builds.
+The library is intended for **release builds** — its purpose is to surface logs from builds where Android Studio Logcat is unavailable (release mode, no developer options). Add it to `implementation`, not `debugImplementation`.
 
 ### Network security
 
