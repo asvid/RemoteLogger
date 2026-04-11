@@ -1,0 +1,45 @@
+version: 2
+
+project_name: remotelogger
+
+before:
+  hooks:
+    - cmd: go mod tidy
+      dir: serverGo
+
+builds:
+  - id: remotelogger
+    dir: serverGo
+    main: .
+    binary: remotelogger
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+brews:
+  - name: remotelogger
+    repository:
+      owner: asvid
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/asvid/RemoteLogger"
+    description: "Stream Android Logcat over WebSocket to a terminal UI on your dev machine"
+    license: "MIT"
+    install: |
+      bin.install "remotelogger"
+    test: |
+      system "#{bin}/remotelogger", "-h"
