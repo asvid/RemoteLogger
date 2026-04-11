@@ -1,6 +1,10 @@
 # RemoteLogger
 
+[![Latest Release](https://img.shields.io/github/v/tag/asvid/RemoteLogger?label=latest&sort=semver)](https://github.com/asvid/RemoteLogger/releases)
+
 Stream Android Logcat over WebSocket to a terminal UI on your dev machine. Useful when the device must run in release mode without developer options (USB debugging off, production build, etc.).
+
+![Server TUI](readme/server-tui.png)
 
 ## How it works
 
@@ -86,7 +90,7 @@ No extra repository needed — the library is on Maven Central:
 
 ```kotlin
 dependencies {
-    implementation("io.github.asvid:remote-logger:1.0.2")
+    implementation("io.github.asvid:remote-logger:1.1.1")
 }
 ```
 
@@ -94,14 +98,10 @@ The library is intended for **release builds** — its purpose is to surface log
 
 ### Setup
 
-The server prints a certificate pin on every startup:
+The server displays the certificate pin in the bottom info bar of the TUI:
 
 ```
-Certificate location  path=/Users/you/Library/Application Support/remotelogger
-Server IP             ip=192.168.1.87
-──────────────────────────────────────────────────────
-Android Config pin (copy this):  certPin=sha256/abc123==
-──────────────────────────────────────────────────────
+ip: 192.168.1.87:3000  cert pin: sha256/abc123==
 ```
 
 Copy the pin and pass it to `Config`. The connection will use `wss://` (encrypted + authenticated):
@@ -115,7 +115,7 @@ class App : Application() {
                 host = "192.168.1.87",
                 port = 3000,
                 packageName = applicationContext.packageName,
-                certPin = "sha256/abc123==",   // from server startup output
+                certPin = "sha256/abc123==",   // from the TUI info bar (bottom of screen)
             )
         )
     }
@@ -124,7 +124,9 @@ class App : Application() {
 
 The certificate is generated once and stored on your machine. The pin stays the same until you delete `cert.pem` from the config directory shown at startup.
 
-`certPin` is optional — omitting it falls back to plain `ws://` (no encryption). In that case, add a network security config to allow cleartext traffic on Android 9+:
+> **`certPin` is the recommended setup.** It enables `wss://` — encrypted and authenticated. Without it the library falls back to plain `ws://`, which Android 9+ blocks by default and should only be used as a temporary convenience during initial setup.
+
+If you need the `ws://` fallback, add a network security config to allow cleartext traffic:
 
 `res/xml/network_security_config.xml`:
 ```xml

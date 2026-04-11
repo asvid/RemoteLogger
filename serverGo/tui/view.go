@@ -8,10 +8,26 @@ import (
 )
 
 var (
-	headerStyle = lipgloss.NewStyle().
+	infoPinStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("226")).
+			Bold(true)
+
+	infoLabelStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("240"))
+
+	titleStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("15")).
 			Background(lipgloss.Color("62")).
+			Padding(0, 2)
+
+	titleAccentStyle = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("226")).
+				Background(lipgloss.Color("62"))
+
+	connBarStyle = lipgloss.NewStyle().
+			Background(lipgloss.Color("236")).
 			Padding(0, 1)
 
 	connectedStyle = lipgloss.NewStyle().
@@ -51,13 +67,20 @@ func (m Model) View() string {
 		m.table.View(),
 		m.filterBarView(),
 		m.statusView(),
+		m.infoView(),
 	)
 }
 
 func (m Model) headerView() string {
-	title := "RemoteLogger"
-	portStr := fmt.Sprintf(":%d", m.port)
+	// Line 1: title bar — full width colored background
+	accent := titleAccentStyle.Render("▌")
+	title := titleStyle.Render("Remote Logger")
+	titleLine := lipgloss.NewStyle().
+		Background(lipgloss.Color("62")).
+		Width(m.width).
+		Render(accent + title)
 
+	// Line 2: connection status on a dark bar
 	var connIndicator string
 	if m.connected {
 		addr := m.clientAddr
@@ -68,17 +91,9 @@ func (m Model) headerView() string {
 	} else {
 		connIndicator = disconnectedStyle.Render("○ WAITING...")
 	}
+	connLine := connBarStyle.Width(m.width).Render(connIndicator)
 
-	left := headerStyle.Render(title + "  " + portStr)
-	right := connIndicator
-
-	gap := m.width - lipgloss.Width(left) - lipgloss.Width(right) - 2
-	if gap < 1 {
-		gap = 1
-	}
-	padding := lipgloss.NewStyle().Width(gap).Render("")
-
-	return left + padding + right
+	return lipgloss.JoinVertical(lipgloss.Left, titleLine, connLine)
 }
 
 func (m Model) filterBarView() string {
@@ -130,6 +145,12 @@ func (m Model) statusView() string {
 		followStr = "  [G] jump to latest"
 	}
 	return statusStyle.Render(fmt.Sprintf("showing %d/%d logs%s", len(m.display), len(m.logs), followStr))
+}
+
+func (m Model) infoView() string {
+	ip := infoLabelStyle.Render("ip: ") + filterValueStyle.Render(fmt.Sprintf("%s:%d", m.serverIP, m.port))
+	pin := infoLabelStyle.Render("  cert pin: ") + infoPinStyle.Render(m.certPin)
+	return ip + pin
 }
 
 // StyledLevel renders a level string with its color — exported for use in plain mode.

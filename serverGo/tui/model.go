@@ -17,8 +17,9 @@ const (
 	maxLogs = 50_000
 	trimTo  = 40_000
 
-	headerHeight    = 1
+	headerHeight    = 2 // title line + connection status line
 	filterBarHeight = 2 // filter inputs + status line
+	infoBarHeight   = 1 // cert pin + IP line
 )
 
 type FocusTarget int
@@ -65,9 +66,11 @@ type Model struct {
 	port        int
 	fileHandle  *os.File // -f continuous output
 	saveMsg     string   // transient status from `s` key
+	certPin     string   // SHA256 fingerprint for Android config
+	serverIP    string   // local IP for display
 }
 
-func New(ch <-chan ws.Event, port int, fileOutput string, initialLevel *logentry.Level, initialTag string) *Model {
+func New(ch <-chan ws.Event, port int, fileOutput string, initialLevel *logentry.Level, initialTag string, certPin string, serverIP string) *Model {
 	cols := []table.Column{
 		{Title: "Time", Width: 15},
 		{Title: "Level", Width: 7},
@@ -130,6 +133,8 @@ func New(ch <-chan ws.Event, port int, fileOutput string, initialLevel *logentry
 		eventCh:     ch,
 		port:        port,
 		fileHandle:  fileHandle,
+		certPin:     certPin,
+		serverIP:    serverIP,
 	}
 }
 
@@ -184,7 +189,7 @@ func (m *Model) updateTableSize() {
 	if msgWidth < 20 {
 		msgWidth = 20
 	}
-	tableHeight := m.height - headerHeight - filterBarHeight - 3 // -3 for table header + borders
+	tableHeight := m.height - headerHeight - filterBarHeight - infoBarHeight - 3 // -3 for table header + borders
 	if tableHeight < 1 {
 		tableHeight = 1
 	}

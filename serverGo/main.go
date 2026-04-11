@@ -10,7 +10,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/log"
-	figure "github.com/common-nighthawk/go-figure"
 	"remotelogger/cert"
 	"remotelogger/logentry"
 	"remotelogger/tui"
@@ -18,9 +17,6 @@ import (
 )
 
 func main() {
-	myFigure := figure.NewFigure("Remote Logger", "doom", true)
-	myFigure.Print()
-
 	port := flag.Int("p", 3000, "Port for Remote Logger")
 	logLevelStr := flag.String("ll", "", "Initial log level filter (VERBOSE/DEBUG/INFO/WARNING/ERROR)")
 	tag := flag.String("t", "", "Initial tag filter")
@@ -33,11 +29,7 @@ func main() {
 		log.Fatal("Certificate error", "err", err)
 	}
 
-	log.Info("Certificate location", "path", certInfo.Dir)
-	log.Info("Server IP", "ip", localIP())
-	log.Info("──────────────────────────────────────────────────────")
-	log.Info("Android Config pin (copy this):", "certPin", certInfo.Fingerprint)
-	log.Info("──────────────────────────────────────────────────────")
+	ip := localIP()
 
 	wsServer := ws.NewServer()
 
@@ -52,7 +44,6 @@ func main() {
 		if err != nil {
 			log.Fatal("Listen error", "err", err)
 		}
-		log.Info("WebSocket server listening (WSS)", "port", *port)
 		if err := http.Serve(ln, mux); err != nil {
 			log.Fatal("Server error", "err", err)
 		}
@@ -72,7 +63,7 @@ func main() {
 		}
 	}
 
-	model := tui.New(wsServer.Ch, *port, *toFile, initialLevel, *tag)
+	model := tui.New(wsServer.Ch, *port, *toFile, initialLevel, *tag, certInfo.Fingerprint, ip)
 	p := tea.NewProgram(model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "TUI error: %v\n", err)

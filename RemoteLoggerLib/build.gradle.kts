@@ -61,7 +61,7 @@ mavenPublishing {
     )
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
-    coordinates("io.github.asvid", "remote-logger", "1.1.0")
+    coordinates("io.github.asvid", "remote-logger", "1.1.1")
     pom {
         name.set("RemoteLogger")
         description.set("Send Android Logcat logs via WebSocket to a developer machine")

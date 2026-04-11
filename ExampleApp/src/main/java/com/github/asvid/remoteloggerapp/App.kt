@@ -15,7 +15,7 @@ class App : Application() {
                 port = 3000,
                 packageName = applicationContext.packageName,
                 reconnectOnDisconnect = true,
-                certPin = "sha256/REPLACE_WITH_PIN_FROM_SERVER_STARTUP",
+                certPin = "sha256/o+7MrNoeGMaMl1dCx4LMsYRhXbogbQi1oXhEcMGLyYc=",
             )
         )
     }
