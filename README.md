@@ -91,6 +91,24 @@ dependencies {
 }
 ```
 
+### Network security
+
+Android 9+ blocks cleartext (non-TLS) traffic by default. Since RemoteLogger connects over plain WebSocket, add a network security config:
+
+`res/xml/network_security_config.xml`:
+```xml
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
+```
+
+Reference it in `AndroidManifest.xml`:
+```xml
+<application
+    android:networkSecurityConfig="@xml/network_security_config"
+    ...>
+```
+
 ### Setup
 
 Initialize in your `Application` class:

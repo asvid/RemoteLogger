@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Permits cleartext (ws://) traffic for RemoteLogger.
+    The library connects over WebSocket to a local dev machine — TLS is not used.
+    This file should only be included in debug builds.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

@@ -4,16 +4,16 @@ import com.vanniktech.maven.publish.SonatypeHost
 plugins {
     id("com.android.library")
     kotlin("android")
-    kotlin("plugin.serialization") version "1.6.10"
+    kotlin("plugin.serialization") version "1.9.24"
     id("com.vanniktech.maven.publish") version "0.30.0"
 }
 
 android {
-    compileSdk = 31
+    namespace = "com.github.asvid.remotelogger"
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 31
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -35,6 +35,12 @@ android {
 
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+    lint {
+        targetSdk = 34
+    }
+    testOptions {
+        targetSdk = 34
     }
 }
 
