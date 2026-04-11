@@ -3,11 +3,10 @@ name: Release Go Server
 on:
   release:
     types: [created]
-    tags:
-      - 'server-v*'
 
 jobs:
   goreleaser:
+    if: "!startsWith(github.event.release.tag_name, 'lib-v')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
