@@ -1,3 +1,5 @@
+
+
 # RemoteLogger
 
 [![Latest Release](https://img.shields.io/github/v/tag/asvid/RemoteLogger?label=latest&sort=semver)](https://github.com/asvid/RemoteLogger/releases)
@@ -22,7 +24,7 @@ Android device  ──WebSocket──▶  Go server (TUI)
 ### Install
 
 ```bash
-brew tap asvid/tap
+brew tap asvid/homebrew-tap
 brew install remotelogger
 ```
 
